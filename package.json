@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
-    "axios": "^1.2.1",
     "expo": "~47.0.8",
     "expo-av": "~13.0.2",
     "expo-dev-client": "~2.0.1",

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Text, Button } from 'react-native';
 import { Audio } from 'expo-av';
-// import axios from 'axios';
 import ky from 'ky';
 import * as FileSystem from 'expo-file-system';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -11,45 +10,45 @@ import { FontAwesome5 } from '@expo/vector-icons';
 
 
 export default function App() {
-  // Refs for the audio
+  //オーディオの再生に必要な変数
   const AudioRecorder = useRef(new Audio.Recording());
   const AudioPlayer = useRef(new Audio.Sound());
 
-  // States for UI
+  //変数の初期化
   const [RecordedURI, SetRecordedURI] = useState('');
   const [AudioPermission, SetAudioPermission] = useState(false);
   const [IsRecording, SetIsRecording] = useState(false);
   const [IsPLaying, SetIsPLaying] = useState(false);
   const [resultText, setResultText] = useState('');
   const [summary, setSummary] = useState('');
-  // Initial Load to get the audio permission
+
+  //録音の許可を求める関数の呼び出し
   useEffect(() => {
     GetPermission();
   }, []);
 
-  // Function to get the audio permission
+  //録音の許可を求める関数
   const GetPermission = async () => {
     const getAudioPerm = await Audio.requestPermissionsAsync();
     const getRecordPerm = await Audio.requestPermissionsAsync();
-    
     
     if (getAudioPerm.granted && getRecordPerm.granted){
       SetAudioPermission(getAudioPerm.granted);
     }
   };
 
-  // Function to start recording
+  //録音の開始をする関数
   const StartRecording = async () => {
     try {
-      // Check if user has given the permission to record
+      //録音の許可があるかどうか
       if (AudioPermission === true) {
         try {
-          // Set the audio mode to record
+          //オーディオの再生に必要な設定
           await Audio.setAudioModeAsync({
             allowsRecordingIOS: true,
             playsInSilentModeIOS: true,
           });
-          // Prepare the Audio Recorder
+          //レコードの準備
           await AudioRecorder.current.prepareToRecordAsync(
             {
               android: {
@@ -72,15 +71,14 @@ export default function App() {
               }
             }
           );
-
-          // Start recording
+          //録音の開始
           await AudioRecorder.current.startAsync();
           SetIsRecording(true);
         } catch (error) {
           console.log(error);
         }
       } else {
-        // If user has not given the permission to record, then ask for permission
+        //録音の許可がない場合は許可を求める
         GetPermission();
       }
     } catch (error) {
@@ -88,17 +86,17 @@ export default function App() {
     }
   };
 
-  // Function to stop recording
+  //録音の停止をする関数
   const StopRecording = async () => {
     try {
-      // Stop recording
+      //録音の停止
       await AudioRecorder.current.stopAndUnloadAsync();
 
-      // Get the recorded URI here
+      //録音した音声のURIを取得
       const result = AudioRecorder.current.getURI();
       if (result) SetRecordedURI(result);
 
-      // Reset the Audio Recorder
+      //録音の状態を変更
       AudioRecorder.current = new Audio.Recording();
 
       const fileType = 'audio/x-caf'; // cafファイルのMIMEタイプ
@@ -106,47 +104,38 @@ export default function App() {
       const fileData = await FileSystem.readAsStringAsync(result, {encoding: FileSystem.EncodingType.Base64});
       const file = new File([fileData], fileName, {type: fileType});
       
-      // 2. axiosなどのHTTPクライアントライブラリを使用してPOSTリクエストを作成する。
       let url = `http://localhost:8000/api/speech2text/${fileName}`; // POST先のURL
-      // const config = {
-      //   headers: {
-      //     'Content-Type': 'multipart/form-data'
-      //   }
-      // };
 
-      // 3. Fileオブジェクトをリクエストのボディとして追加する。
+      // 送信するデータをセット
       const formData = new FormData();
-
-      // formData.append('file', file);
       formData.append('file', {
         uri: result,
         name: fileName,
         type: 'audio/x-caf',
       });
+      // POST送信
       let response = await ky.post(url, {
         body: formData,
         headers: {
           'content-type': 'multipart/form-data',
         }
       });
+      //音声認識の結果を取得
       const json = await response.json();
-      console.log("json", json);
       const parsed_json = JSON.parse(json);
-      console.log("parsed_json", parsed_json);
       const text = parsed_json.result[0];
       setResultText(text);
-      console.log(JSON.stringify({"data": text}));
       url = `http://localhost:8000/api/summary`; // POST先のURL
+      //文章要約を行うAPIにPOST送信
       let response_summary = await ky.post(url, {
         body: JSON.stringify({"data": text}),
         headers: {
           'content-type': 'application/json',
         }
       });
+      //文章要約の結果を取得
       const json_summary = await response_summary.json();
-      console.log("json_summary", json_summary);
       const parsed_json_summary = JSON.parse(json_summary);
-      console.log("parsed_json_summary", parsed_json_summary);
       const summary = parsed_json_summary.result;
       setSummary(summary);
       SetIsRecording(false);
@@ -155,16 +144,16 @@ export default function App() {
     }
   };
 
-  // Function to play the recorded audio
+  //録音した音声を再生する関数
   const PlayRecordedAudio = async () => {
     try {
-      // Load the Recorded URI
+      //録音した音声を再生
       await AudioPlayer.current.loadAsync({ uri: RecordedURI }, {}, true);
 
-      // Get Player Status
+      //プレイヤーの状態を取得
       const playerStatus = await AudioPlayer.current.getStatusAsync();
 
-      // Play if song is loaded successfully
+      //音声が再生されていない場合は再生する
       if (playerStatus.isLoaded) {
         if (playerStatus.isPlaying === false) {
           AudioPlayer.current.playAsync();
@@ -176,13 +165,13 @@ export default function App() {
     }
   };
 
-  // Function to stop the playing audio
+  //再生中の音声を停止する関数
   const StopPlaying = async () => {
     try {
-      //Get Player Status
+      //プレイヤーの状態を取得
       const playerStatus = await AudioPlayer.current.getStatusAsync();
       
-      // If song is playing then stop it
+      //音声が再生されている場合は停止する
       if (playerStatus.isLoaded === true)
         await AudioPlayer.current.unloadAsync();
 
