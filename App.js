@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Text, Button } from 'react-native';
 import { Audio } from 'expo-av';
-import axios from 'axios';
+// import axios from 'axios';
 import ky from 'ky';
 import * as FileSystem from 'expo-file-system';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -108,11 +108,11 @@ export default function App() {
       
       // 2. axiosなどのHTTPクライアントライブラリを使用してPOSTリクエストを作成する。
       let url = `http://localhost:8000/api/speech2text/${fileName}`; // POST先のURL
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      };
+      // const config = {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data'
+      //   }
+      // };
 
       // 3. Fileオブジェクトをリクエストのボディとして追加する。
       const formData = new FormData();
@@ -149,9 +149,6 @@ export default function App() {
       console.log("parsed_json_summary", parsed_json_summary);
       const summary = parsed_json_summary.result;
       setSummary(summary);
-
-
-
       SetIsRecording(false);
     } catch (error) {
       console.log(error);
