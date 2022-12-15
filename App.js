@@ -127,6 +127,11 @@ export default function App() {
       const text = parsed_json.result[0];
       setResultText(text);
       url = `http://localhost:8000/api/summary`; // POST先のURL
+      if(text === ""){
+        setSummary("音声が認識できませんでした。");
+        SetIsRecording(false);
+        return;
+      }
       //文章要約を行うAPIにPOST送信
       let response_summary = await client.post(url, {
         body: JSON.stringify({"data": text}),
