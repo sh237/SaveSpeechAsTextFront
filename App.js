@@ -62,7 +62,7 @@ export default function App() {
               ios: {
                 extension: '.caf',
                 audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
-                sampleRate: 16000,
+                sampleRate: 44100,
                 numberOfChannels: 1,
                 bitRate: 128000,
                 linearPCMBitDepth: 16,
@@ -106,6 +106,10 @@ export default function App() {
       
       let url = `http://localhost:8000/api/speech2text/${fileName}`; // POST先のURL
 
+      const client = ky.create({
+        headers: { 'content-Type': 'application/json' },
+        timeout: 100000, // milliseconds
+      });
       // 送信するデータをセット
       const formData = new FormData();
       formData.append('file', {
@@ -114,11 +118,8 @@ export default function App() {
         type: 'audio/x-caf',
       });
       // POST送信
-      let response = await ky.post(url, {
+      let response = await client.post(url, {
         body: formData,
-        headers: {
-          'content-type': 'multipart/form-data',
-        }
       });
       //音声認識の結果を取得
       const json = await response.json();
@@ -127,11 +128,8 @@ export default function App() {
       setResultText(text);
       url = `http://localhost:8000/api/summary`; // POST先のURL
       //文章要約を行うAPIにPOST送信
-      let response_summary = await ky.post(url, {
+      let response_summary = await client.post(url, {
         body: JSON.stringify({"data": text}),
-        headers: {
-          'content-type': 'application/json',
-        }
       });
       //文章要約の結果を取得
       const json_summary = await response_summary.json();
@@ -226,21 +224,19 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ecf0f1',
-    backgroundColor: '#e6e6e6',
+    backgroundColor: '#fcfcfc',
   },
   header: {
     height: 120,
     paddingTop: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'lightblue',
+    backgroundColor: '#aaf3f9',
     borderRadius: 10,
     shadowRadius: 10,
     shadowColor: 'black',
     shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 5, 
+    elevation: 3, 
   },
   header_text: {
     fontSize: 30,
